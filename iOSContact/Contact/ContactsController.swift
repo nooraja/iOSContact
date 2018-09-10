@@ -9,10 +9,11 @@
 import UIKit
 import CoreData
 
-class ContactsViewController: UITableViewController, CreateContactControllerDelegate, NSFetchedResultsControllerDelegate {
+class ContactsController: UITableViewController, CreateContactControllerDelegate, NSFetchedResultsControllerDelegate {
     
 //    var expandableName: ContactJsonStuff?
     var contacts = [Contact]()
+    var jsonContact = JSONContact()
     
     lazy var fetchResultsController: NSFetchedResultsController<Contact> = {
         let context = CoreDataManager.shared.persistentContainer.viewContext
@@ -73,12 +74,7 @@ class ContactsViewController: UITableViewController, CreateContactControllerDele
         }
     }
     
-    @objc func handleRefresh() {
-        Service.shared.downloadContactFromServer()
-        self.refreshControl?.endRefreshing()
-    }
-  
-    
+   
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.backgroundColor = .white
@@ -91,18 +87,28 @@ class ContactsViewController: UITableViewController, CreateContactControllerDele
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(handleRefresh), for: .valueChanged)
         refreshControl.tintColor = .white
+        self.refreshControl = refreshControl
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Add", style: .plain, target: self, action: #selector(handleAddContact))
         
+        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Delete", style: .plain, target: self, action: #selector(handleDelete))
+        
     }
     
+    @objc func handleRefresh() {
+        print("Try to refresh/fetch json from back-end")
+        Service.shared.downloadContactFromServer()
+        self.refreshControl?.endRefreshing()
+    }
     
     @objc func handleAddContact() {
         print("Trying to add some contact")
         
+        
         let createContactController = CreateContactController()
         let navController = UINavigationController(rootViewController: createContactController)
         createContactController.delegate = self
+        
         present(navController, animated: true, completion: nil)
     }
     
@@ -127,32 +133,8 @@ class ContactsViewController: UITableViewController, CreateContactControllerDele
         }
     }
     
-//    func fetchUser()  {
-//
-//        let urlString = "https://sportacuz.id/sandbox/contact"
-//
-//        guard let url = URL(string: urlString) else { return }
-//        URLSession.shared.dataTask(with: url) { (data, response, err) in
-//            guard let data = data else {return}
-//            print(data)
-//
-//            do {
-//                let expandableJSON =  try JSONDecoder().decode(ContactJsonStuff.self, from: data)
-//                self.expandableName = expandableJSON
-//                DispatchQueue.main.async {
-//                    print(self.expandableName?.data)
-//                    self.tableView.reloadData()
-//                }
-//
-//            } catch let jsonErr {
-//                print("Error serializing json", jsonErr)
-//            }
-//            }.resume()
-//    }
- 
+
     override func numberOfSections(in tableView: UITableView) -> Int {
-//        guard let exp = expandableName?.data.count else { return 0 }
-//        print(exp)
         return fetchResultsController.sections?.count ?? 0
     }
     
@@ -172,9 +154,14 @@ class ContactsViewController: UITableViewController, CreateContactControllerDele
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let destination = UserContactContainerView()
+        let destination = ContactsDetail()
         destination.contact = fetchResultsController.object(at: indexPath)
         
+//        guard let id = jsonContact.data![indexPath.row].id else { return }
+//        let testJSON = getDetailContactFromServer(id: id)
+//        destination.viewHeader.nameLabel.text = "\(String(describing: testJSON.data![indexPath.row].firstname)) \(String(describing: testJSON.data![indexPath.row].lastname))"
+//        destination.mobileText.text = "mobile    \(testJSON.data![indexPath.row].phonenumber ?? "")"
+//        destination.emailText.text = "email    \(testJSON.data![indexPath.row].email ?? "")"
         self.navigationController?.pushViewController(destination, animated: true)
         
         
@@ -204,7 +191,40 @@ class ContactsViewController: UITableViewController, CreateContactControllerDele
         }
     }
 
+    func getDetailContactFromServer(id: Int) -> JSONContact {
+        
+        let urlString = "https://sportacuz.id/sandbox/contact/\(id)"
+        
+//        var jsonContact = JSONContact()
+        
+        let url = URL(string: urlString)
+        URLSession.shared.dataTask(with: url!) { (data, resp, err) in
+            print("Finished downloading")
+            guard let data = data else {return}
+            print(data)
+            do {
+                let suspectJSON =  try JSONDecoder().decode(JSONContact.self, from: data)
+                for suspect in suspectJSON.data! {
+                    //                    self.suspects.data.append(suspect)
+                    //                    print(self.suspects.count)
+                    self.jsonContact.data?.append(suspect)
+                }
+                
+                self.jsonContact = suspectJSON
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
+                
+            } catch let jsonErr {
+                print("Error serializing json", jsonErr)
+            }
+        }.resume() // please do not forget to make this call
+        
+        return self.jsonContact
+    }
 }
+
+
 
 struct ContactJsonStuff: Decodable {
     var data: [ContactDataArray]

@@ -48,7 +48,7 @@ struct CoreDataManager {
         }
     }
     
-    func createContact(firstName: String, lastName: String, email: String, phoneNumber: String, isFavorite: Bool = false,_ imageUrl: String = "") -> (Contact?, Error?) {
+    func createContact(firstName: String, lastName: String, email: String, phoneNumber: String, isFavorite: Int32 = 1,_ imageUrl: String = "") -> (Contact?, Error?) {
         let context = persistentContainer.viewContext
         
         // create a contact

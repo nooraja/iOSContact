@@ -9,7 +9,7 @@
 import UIKit
 
 
-class UserContactContainerView: UIViewController {
+class ContactsDetail: UIViewController {
     
     var contact: Contact? {
         didSet {
@@ -39,15 +39,15 @@ class UserContactContainerView: UIViewController {
         
     }
     
-    let viewHeader: UserHeaderContactView =  {
-        let vw = UserHeaderContactView()
+    lazy var viewHeader: ContactsHeaderDetail =  {
+        let vw = ContactsHeaderDetail()
         vw.translatesAutoresizingMaskIntoConstraints = false
         vw.backgroundColor = .white
         
         return vw
     }()
     
-    let mobileText: UITextView = {
+    lazy var mobileText: UITextView = {
         let txt = UITextView()
         txt.text = "mobile"
         txt.tintColor = UIColor(white: 0, alpha: 0.2)
@@ -59,7 +59,7 @@ class UserContactContainerView: UIViewController {
         return txt
     }()
     
-    let emailText: UITextView = {
+    lazy var emailText: UITextView = {
         let txt = UITextView()
         txt.text = "email"
         txt.tintColor = UIColor(white: 0, alpha: 0.2)

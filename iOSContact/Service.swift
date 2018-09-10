@@ -8,6 +8,7 @@
 
 import Foundation
 import CoreData
+import UIKit
 
 struct Service {
     static let shared = Service()
@@ -31,7 +32,7 @@ struct Service {
             
             do {
                 // i'll leave a link in the bottom if you want more details on how JSON Decodable works
-                let jsonContacts = try jsonDecoder.decode(ArrayContact.self, from: data)
+                let jsonContacts = try jsonDecoder.decode(JSONContact.self, from: data)
                 
                 var privateContext = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
                 
@@ -45,7 +46,7 @@ struct Service {
                     user.lastname = contacts.lastname
                     user.phonenumber = contacts.phonenumber
                     user.email = contacts.email
-                    user.isfavorite = false
+                    user.isfavorite = 1
                     user.imageurl = ""
                 })
                 do {
@@ -61,16 +62,28 @@ struct Service {
     }
 }
 
-struct ArrayContact: Decodable {
-    var data: [JSONContact]?
+struct JSONContact: Decodable {
+    var message: String?
+    var data: [ArrayContact]?
 }
 
-struct JSONContact: Decodable {
-    let firstname: String
-    let lastname: String
-    let phonenumber: String
-    let email: String
-    var isfavorite: Bool
-    let imageurl: String
+struct ArrayContact: Codable {
+    let id: Int?
+    let firstname: String?
+    let lastname: String?
+    let phonenumber: String?
+    let email: String?
+    var isfavorite: Bool?
+    let imageurl: String?
+    
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case firstname = "firstname"
+        case lastname = "lastname"
+        case phonenumber = "phonenumber"
+        case email = "email"
+        case isfavorite = "isfavorite"
+        case imageurl = "imageurl"
+    }
 }
 

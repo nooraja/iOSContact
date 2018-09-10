@@ -19,7 +19,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         window = UIWindow()
         window?.makeKeyAndVisible()
         
-        let navController = UINavigationController(rootViewController: ContactsViewController())
+        let navController = UINavigationController(rootViewController: ContactsController())
         window?.rootViewController = navController
         
         return true

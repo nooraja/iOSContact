@@ -8,7 +8,7 @@
 
 import UIKit
 
-class UserHeaderContactView: UIView {
+class ContactsHeaderDetail: UIView {
     
     lazy var profileImageView: UIImageView = {
         let profileImageView = UIImageView()
@@ -24,7 +24,7 @@ class UserHeaderContactView: UIView {
         return profileImageView
     }()
     
-    let nameLabel: UILabel = {
+    lazy var nameLabel: UILabel = {
         let addPhotoLabel = UILabel()
         addPhotoLabel.translatesAutoresizingMaskIntoConstraints = false
         addPhotoLabel.text = "name"

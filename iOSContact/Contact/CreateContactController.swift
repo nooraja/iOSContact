@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreData
+import Alamofire
 
 protocol CreateContactControllerDelegate {
     func didAddContact(contact: Contact)
@@ -178,9 +179,52 @@ class CreateContactController: UIViewController, UINavigationControllerDelegate,
             
             dismiss(animated: true) {
                 self.delegate?.didAddContact(contact: tuple.0!)
+                self.handleUpload()
             }
         } catch let saveErr {
             print("Failed to save Company :", saveErr)
+        }
+    }
+    
+    func handleUpload()  {
+        print("Trying to add data to server")
+        guard let firstname = firstNameTextField.text else { return }
+        guard let lastname = lastNameTextField.text else { return }
+        guard let phone = mobileTextField.text else { return }
+        guard let email = emailTextField.text else { return }
+        let headers: HTTPHeaders = ["Content-type": "application/json"]
+        
+        let param: Parameters = [
+            "firstname"     : firstname,
+            "lastname"      : lastname,
+            "email"         : email,
+            "isfavorite"    : 1,
+            "phonenumber"   : phone
+            
+        ]
+        
+        guard let urlString = URL(string: "https://sportacuz.id/sandbox/contact") else { return }
+        
+        
+        Alamofire.upload(multipartFormData: { multipart in
+
+            for (key, value) in param {
+                if value is String {
+                    multipart.append((value as AnyObject).data(using: String.Encoding.utf8.rawValue)!, withName: key)
+                } else if value is Int {
+                    multipart.append("\(value)".data(using: String.Encoding.utf8)!, withName: key)
+                }
+            }
+            
+        }, to: urlString, method: .post, headers: headers) { encodingResult in
+            switch encodingResult {
+            case .success(let upload, _, _):
+                upload.responseJSON { response in
+                    debugPrint(response)
+                }
+            case .failure(let encodingError):
+                print(encodingError)
+            }
         }
     }
 
@@ -191,7 +235,7 @@ class CreateContactController: UIViewController, UINavigationControllerDelegate,
         contact?.lastname = lastNameTextField.text
         contact?.phonenumber = mobileTextField.text
         contact?.email = emailTextField.text
-        contact?.isfavorite = false
+        contact?.isfavorite = 1
         contact?.imageurl = ""
         
         do {
