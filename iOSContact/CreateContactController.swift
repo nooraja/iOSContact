@@ -11,7 +11,7 @@ import CoreData
 
 protocol CreateContactControllerDelegate {
     func didAddContact(contact: Contact)
-    func EditContact(contact: Contact)
+    func didEditContact(contact: Contact)
 }
 
 class CreateContactController: UIViewController, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
@@ -23,6 +23,7 @@ class CreateContactController: UIViewController, UINavigationControllerDelegate,
     }
     
     var delegate: CreateContactControllerDelegate?
+    var indexPathForContact: IndexPath? = nil
     
     lazy var companyImageView: UIImageView = {
         let iv = UIImageView(image: #imageLiteral(resourceName: "UserpicIcon"))
@@ -44,7 +45,7 @@ class CreateContactController: UIViewController, UINavigationControllerDelegate,
         return label
     }()
     
-    let firstNameTextField: UITextField = {
+    lazy var firstNameTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Enter name"
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -59,7 +60,7 @@ class CreateContactController: UIViewController, UINavigationControllerDelegate,
         return label
     }()
     
-    let lastNameTextField: UITextField = {
+    lazy var lastNameTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Enter name"
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -74,7 +75,7 @@ class CreateContactController: UIViewController, UINavigationControllerDelegate,
         return label
     }()
     
-    let mobileTextField: UITextField = {
+    lazy var mobileTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Enter name"
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -90,7 +91,7 @@ class CreateContactController: UIViewController, UINavigationControllerDelegate,
         return label
     }()
     
-    let emailTextField: UITextField = {
+    lazy var emailTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "Enter name"
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -132,8 +133,77 @@ class CreateContactController: UIViewController, UINavigationControllerDelegate,
         super.viewDidLoad()
         
         view.backgroundColor = .white
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Save", style: .plain, target: self, action: #selector(handleSave))
+        navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(handleCancelModal))
         
         setuUpUI()
+    }
+    
+    @objc func handleCancelModal() {
+        dismiss(animated: true, completion: nil )
+    }
+    
+    @objc private func handleSave() {
+        if contact == nil {
+            createContact()
+        } else {
+            saveContactChanges()
+        }
+    }
+    
+    private func createContact()  {
+        print("Trying to save contact...")
+        
+        let context = CoreDataManager.shared.persistentContainer.viewContext
+        
+        // insert to CoreData
+        let contact = NSEntityDescription.insertNewObject(forEntityName: "Contact", into: context)
+        
+        contact.setValue(firstNameTextField.text , forKey: "firstname")
+        contact.setValue(lastNameTextField.text , forKey: "lastname")
+        contact.setValue(mobileTextField.text, forKey: "phonenumber")
+        contact.setValue(emailTextField.text, forKey: "email")
+        contact.setValue("", forKey: "imageurl")
+        contact.setValue(false, forKey: "isfavorite")
+        
+        guard let firstname = firstNameTextField.text else { return }
+        guard let lastname = lastNameTextField.text else { return }
+        guard let phone = mobileTextField.text else { return }
+        guard let email = emailTextField.text else { return }
+        
+        let tuple = CoreDataManager.shared.createContact(firstName: firstname, lastName: lastname, email: email, phoneNumber: phone)
+        // perform the save
+        do {
+            try context.save()
+            
+            dismiss(animated: true) {
+                self.delegate?.didAddContact(contact: tuple.0!)
+            }
+        } catch let saveErr {
+            print("Failed to save Company :", saveErr)
+        }
+    }
+
+    private func saveContactChanges() {
+        let context = CoreDataManager.shared.persistentContainer.viewContext
+        
+        contact?.firstname = firstNameTextField.text
+        contact?.lastname = lastNameTextField.text
+        contact?.phonenumber = mobileTextField.text
+        contact?.email = emailTextField.text
+        contact?.isfavorite = false
+        contact?.imageurl = ""
+        
+        do {
+            try context.save()
+            
+            // save succeeded
+            dismiss(animated: true) {
+                self.delegate?.didEditContact(contact: self.contact!)
+            }
+        } catch let saveErr {
+            print("Failed to save company changes: ", saveErr )
+        }
     }
     
     

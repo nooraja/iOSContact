@@ -17,6 +17,7 @@
 		26A015E22144C13700918D6A /* ContactMD.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 26A015E02144C13700918D6A /* ContactMD.xcdatamodeld */; };
 		26A015E42144C2E400918D6A /* CoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26A015E32144C2E400918D6A /* CoreDataManager.swift */; };
 		26A015E62144C83100918D6A /* CreateContactController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26A015E52144C83100918D6A /* CreateContactController.swift */; };
+		26A015E82144DA8F00918D6A /* Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26A015E72144DA8F00918D6A /* Service.swift */; };
 		26B99240213F8B990004A4B4 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26B9923F213F8B990004A4B4 /* AppDelegate.swift */; };
 		26B99242213F8B990004A4B4 /* ContactsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26B99241213F8B990004A4B4 /* ContactsViewController.swift */; };
 		26B99245213F8B990004A4B4 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 26B99243213F8B990004A4B4 /* Main.storyboard */; };
@@ -35,6 +36,7 @@
 		26A015E12144C13700918D6A /* ContactMD.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = ContactMD.xcdatamodel; sourceTree = "<group>"; };
 		26A015E32144C2E400918D6A /* CoreDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataManager.swift; sourceTree = "<group>"; };
 		26A015E52144C83100918D6A /* CreateContactController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateContactController.swift; sourceTree = "<group>"; };
+		26A015E72144DA8F00918D6A /* Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service.swift; sourceTree = "<group>"; };
 		26B9923C213F8B990004A4B4 /* iOSContact.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iOSContact.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		26B9923F213F8B990004A4B4 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		26B99241213F8B990004A4B4 /* ContactsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsViewController.swift; sourceTree = "<group>"; };
@@ -82,6 +84,7 @@
 				2601BF0321432F96000DD557 /* UserContactContainerView.swift */,
 				26A015DE21448EFD00918D6A /* UserHeaderContactView.swift */,
 				2601BF0121414AB9000DD557 /* ContactDetailController.swift */,
+				26A015E72144DA8F00918D6A /* Service.swift */,
 				26B99243213F8B990004A4B4 /* Main.storyboard */,
 				26B99246213F8B9A0004A4B4 /* Assets.xcassets */,
 				269FB39D2143815200C7AACE /* Extension.swift */,
@@ -166,6 +169,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				26B99242213F8B990004A4B4 /* ContactsViewController.swift in Sources */,
+				26A015E82144DA8F00918D6A /* Service.swift in Sources */,
 				2601BF0221414AB9000DD557 /* ContactDetailController.swift in Sources */,
 				269FB39E2143815200C7AACE /* Extension.swift in Sources */,
 				26A015E22144C13700918D6A /* ContactMD.xcdatamodeld in Sources */,

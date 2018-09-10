@@ -12,6 +12,12 @@ let ContactsCellReusedIndentified = NSStringFromClass(ContactsCell.classForCoder
 
 class ContactsCell: UITableViewCell {
     
+    var contact: Contact? {
+        didSet {
+            title.text = contact?.firstname
+        }
+    }
+    
     var icon: UIImageView = {
         var icon = UIImageView()
         icon.translatesAutoresizingMaskIntoConstraints = false

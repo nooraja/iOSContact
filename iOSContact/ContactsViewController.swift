@@ -7,11 +7,77 @@
 //
 
 import UIKit
+import CoreData
 
-class ContactsViewController: UITableViewController, CreateContactControllerDelegate {
+class ContactsViewController: UITableViewController, CreateContactControllerDelegate, NSFetchedResultsControllerDelegate {
     
-    var expandableName: ContactJsonStuff?
+//    var expandableName: ContactJsonStuff?
     var contacts = [Contact]()
+    
+    lazy var fetchResultsController: NSFetchedResultsController<Contact> = {
+        let context = CoreDataManager.shared.persistentContainer.viewContext
+        
+        let request: NSFetchRequest<Contact> = Contact.fetchRequest()
+        request.sortDescriptors = [
+            NSSortDescriptor(key: "firstname", ascending: true)
+        ]
+        
+        let frc = NSFetchedResultsController(fetchRequest: request, managedObjectContext: context, sectionNameKeyPath: "firstname", cacheName: nil)
+        
+        frc.delegate = self
+        
+        do {
+          try frc.performFetch()
+            tableView.reloadData()
+            
+        } catch let err {
+            print(err)
+        }
+        
+        return frc
+    }()
+    
+    let cellId = "cellId"
+    
+    func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        tableView.beginUpdates()
+    }
+    
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        tableView.endUpdates()
+    }
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange sectionInfo: NSFetchedResultsSectionInfo, atSectionIndex sectionIndex: Int, for type: NSFetchedResultsChangeType) {
+        switch type {
+        case .insert:
+            tableView.insertSections(IndexSet(integer: sectionIndex), with: .fade)
+        case .delete:
+            tableView.deleteSections(IndexSet(integer: sectionIndex), with: .fade)
+        case .move:
+            break
+        case .update:
+            break
+        }
+    }
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        switch type {
+        case .insert:
+            tableView.insertRows(at: [newIndexPath!], with: .fade)
+        case .delete:
+            tableView.deleteRows(at: [indexPath!], with: .fade)
+        case .update:
+            tableView.reloadRows(at: [indexPath!], with: .fade)
+        case .move:
+            tableView.moveRow(at: indexPath!, to: newIndexPath!)
+        }
+    }
+    
+    @objc func handleRefresh() {
+        Service.shared.downloadContactFromServer()
+        self.refreshControl?.endRefreshing()
+    }
+  
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -22,9 +88,12 @@ class ContactsViewController: UITableViewController, CreateContactControllerDele
         tableView.register(ContactsCell.self, forCellReuseIdentifier: ContactsCellReusedIndentified)
         tableView.dataSource = self
         
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(handleRefresh), for: .valueChanged)
+        refreshControl.tintColor = .white
+        
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Add", style: .plain, target: self, action: #selector(handleAddContact))
         
-        fetchUser()
     }
     
     
@@ -37,56 +106,74 @@ class ContactsViewController: UITableViewController, CreateContactControllerDele
         present(navController, animated: true, completion: nil)
     }
     
-    func fetchUser()  {
+    
+    @objc private func handleDelete() {
+        print("Let's delete a company")
         
-        let urlString = "https://sportacuz.id/sandbox/contact"
+        let request: NSFetchRequest<Contact> = Contact.fetchRequest()
+        //        request.predicate = NSPredicate(format: "name CONTAINS %@", "Z")
         
-        guard let url = URL(string: urlString) else { return }
-        URLSession.shared.dataTask(with: url) { (data, response, err) in
-            guard let data = data else {return}
-            print(data)
-            
-            do {
-                let expandableJSON =  try JSONDecoder().decode(ContactJsonStuff.self, from: data)
-                self.expandableName = expandableJSON
-                DispatchQueue.main.async {
-                    print(self.expandableName?.data)
-                    self.tableView.reloadData()
-                }
-                
-            } catch let jsonErr {
-                print("Error serializing json", jsonErr)
-            }
-            }.resume()
+        let context = CoreDataManager.shared.persistentContainer.viewContext
+        let contactWithB = try? context.fetch(request)
+        
+        contactWithB?.forEach { (contact) in
+            context.delete(contact)
+        }
+        
+        do {
+            try context.save()
+        } catch let err {
+            print(err)
+        }
     }
+    
+//    func fetchUser()  {
+//
+//        let urlString = "https://sportacuz.id/sandbox/contact"
+//
+//        guard let url = URL(string: urlString) else { return }
+//        URLSession.shared.dataTask(with: url) { (data, response, err) in
+//            guard let data = data else {return}
+//            print(data)
+//
+//            do {
+//                let expandableJSON =  try JSONDecoder().decode(ContactJsonStuff.self, from: data)
+//                self.expandableName = expandableJSON
+//                DispatchQueue.main.async {
+//                    print(self.expandableName?.data)
+//                    self.tableView.reloadData()
+//                }
+//
+//            } catch let jsonErr {
+//                print("Error serializing json", jsonErr)
+//            }
+//            }.resume()
+//    }
  
-    
-    
     override func numberOfSections(in tableView: UITableView) -> Int {
-        guard let exp = expandableName?.data.count else { return 0 }
-        print(exp)
-        return exp
+//        guard let exp = expandableName?.data.count else { return 0 }
+//        print(exp)
+        return fetchResultsController.sections?.count ?? 0
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        return (expandableName?.data.count)!
+//        return (expandableName?.data.count)!
+        return fetchResultsController.sections![section].numberOfObjects
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: ContactsCellReusedIndentified, for: indexPath) as! ContactsCell
         
+        let contact = fetchResultsController.object(at: indexPath)
+        cell.contact = contact
         
-        cell.icon.image = #imageLiteral(resourceName: "UserpicIcon")
-        guard let firstname = expandableName?.data[indexPath.row].firstname else { return UITableViewCell() }
-        guard let lastname = expandableName?.data[indexPath.row].lastname else { return UITableViewCell() }
-        cell.title.text = "\(firstname) \(lastname)"
         return cell
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let destination = UserContactContainerView()
-        destination.contact = expandableName?.data[indexPath.section]
+        destination.contact = fetchResultsController.object(at: indexPath)
         
         self.navigationController?.pushViewController(destination, animated: true)
         
@@ -99,24 +186,27 @@ class ContactsViewController: UITableViewController, CreateContactControllerDele
     
     
     // specify your extension methods here....
-    func didAddContact(contact: Contact) {
+    func didEditContact(contact: Contact) {
         // update my tableview somehow
-        let row = contacts.index(of: contact)
+        guard let row = contacts.index(of: contact) else { return }
         
-        let reloadIndexPath = IndexPath(row: row!, section: 0)
+        // this is error
+        let reloadIndexPath = IndexPath(row: row, section: 0)
         tableView.reloadRows(at: [reloadIndexPath], with: .middle)
     }
     
-    func EditContact(contact: Contact) {
+    func didAddContact(contact: Contact) {
         contacts.append(contact)
         let newIndexPath = IndexPath(row: contacts.count - 1, section: 0)
-        tableView.insertRows(at: [newIndexPath], with: .automatic)
+        
+        if contacts.count == 0 {
+            tableView.insertRows(at: [newIndexPath], with: .automatic)
+        }
     }
 
 }
 
 struct ContactJsonStuff: Decodable {
-
     var data: [ContactDataArray]
 }
 

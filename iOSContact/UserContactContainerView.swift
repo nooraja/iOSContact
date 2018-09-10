@@ -11,23 +11,32 @@ import UIKit
 
 class UserContactContainerView: UIViewController {
     
-    var contact: ContactDataArray? {
+    var contact: Contact? {
         didSet {
             viewHeader.nameLabel.text = (contact?.firstname)! + " " + (contact?.lastname)!
-            
             setupAttributedCaption()
         }
     }
     
+    var indexPath: IndexPath? = nil
+    
     fileprivate func setupAttributedCaption() {
         
-        guard let phone = contact?.lastname else { return  }
+        guard let phone = contact?.phonenumber else { return  }
+        guard let email = contact?.email else { return }
         
-        let attributedText = NSMutableAttributedString(string: "email    ", attributes: [NSAttributedStringKey.foregroundColor: UIColor(white: 0, alpha: 0.6)])
+        let attributedPhoneText = NSMutableAttributedString(string: "phone   ", attributes: [NSAttributedStringKey.foregroundColor: UIColor(white: 0, alpha: 0.6)])
         
-        attributedText.append(NSAttributedString(string: " \(contact?.firstname ?? "")", attributes: [NSAttributedStringKey.font: UIFont.systemFont(ofSize: 14)]))
+        attributedPhoneText.append(NSAttributedString(string: " \(phone)", attributes: [NSAttributedStringKey.font: UIFont.systemFont(ofSize: 14)]))
         
-        emailText.attributedText = attributedText
+        mobileText.attributedText = attributedPhoneText
+        
+        let attributedEmailText = NSMutableAttributedString(string: "email   ", attributes: [NSAttributedStringKey.foregroundColor: UIColor(white: 0, alpha: 0.6)])
+        
+        attributedEmailText.append(NSAttributedString(string: " \(email)", attributes: [NSAttributedStringKey.font: UIFont.systemFont(ofSize: 14)]))
+        
+        emailText.attributedText = attributedEmailText
+        
     }
     
     let viewHeader: UserHeaderContactView =  {
@@ -83,7 +92,32 @@ class UserContactContainerView: UIViewController {
         emailText.anchor(top: mobileText.bottomAnchor, left: view.leftAnchor, bottom: nil, right: view.rightAnchor, paddingTop: 10, paddingLeft: 10, paddingBottom: 0, paddingRight: 10, width: 0, height: 40)
         
       
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Edit", style: .plain, target: self, action: #selector(handleEdit))
+        
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        viewHeader.nameLabel.text = (contact?.firstname)! + " " + (contact?.lastname)!
+        setupAttributedCaption()
+    }
+    
+    @objc func handleEdit() {
+        print("Try to edit this ")
+        
+        let editContactController = CreateContactController()
+        editContactController.contact = contact
+        editContactController.indexPathForContact = self.indexPath
+        editContactController.firstNameTextField.text = contact?.firstname
+        editContactController.lastNameTextField.text = contact?.lastname
+        editContactController.mobileTextField.text = contact?.phonenumber
+        editContactController.emailTextField.text = contact?.email
         
         
+        let navController = UINavigationController(rootViewController: editContactController)
+        
+        
+        present(navController, animated: true, completion: nil)
     }
 }
