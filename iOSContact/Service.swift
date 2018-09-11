@@ -22,7 +22,7 @@ struct Service {
         URLSession.shared.dataTask(with: url) { (data, resp, err) in
             print("Finished downloading")
             if let err = err {
-                print("Failed to download companies:", err)
+                print("Failed to download contacts:", err)
                 return
             }
             
@@ -40,25 +40,25 @@ struct Service {
                 
                 jsonContacts.data?.forEach({ (contacts) in
                     print(contacts.lastname)
-                    
                     let user = Contact(context: privateContext)
+                    user.id = contacts.id!
                     user.firstname = contacts.firstname
                     user.lastname = contacts.lastname
                     user.phonenumber = contacts.phonenumber
                     user.email = contacts.email
                     user.isfavorite = 1
                     user.imageurl = ""
+                    
                 })
                 do {
                     try privateContext.save()
                 } catch let err {
                     print("Failed to save companies: " ,err)
                 }
-                
             } catch let err {
                 print("Failed to decode:", err)
             }
-            }.resume() // please do not forget to make this call
+        }.resume() // please do not forget to make this call
     }
 }
 
@@ -67,8 +67,12 @@ struct JSONContact: Decodable {
     var data: [ArrayContact]?
 }
 
-struct ArrayContact: Codable {
-    let id: Int?
+class ContactUser: Decodable {
+    var data: ArrayContact
+}
+
+struct ArrayContact: Decodable {
+    let id: Int16?
     let firstname: String?
     let lastname: String?
     let phonenumber: String?
@@ -85,5 +89,6 @@ struct ArrayContact: Codable {
         case isfavorite = "isfavorite"
         case imageurl = "imageurl"
     }
+    
 }
 

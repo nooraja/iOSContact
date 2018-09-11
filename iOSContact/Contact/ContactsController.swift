@@ -11,9 +11,9 @@ import CoreData
 
 class ContactsController: UITableViewController, CreateContactControllerDelegate, NSFetchedResultsControllerDelegate {
     
-//    var expandableName: ContactJsonStuff?
     var contacts = [Contact]()
-    var jsonContact = JSONContact()
+    var contactUser: ContactUser?
+    
     
     lazy var fetchResultsController: NSFetchedResultsController<Contact> = {
         let context = CoreDataManager.shared.persistentContainer.viewContext
@@ -77,6 +77,29 @@ class ContactsController: UITableViewController, CreateContactControllerDelegate
    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        let urlString = "https://sportacuz.id/sandbox/contact/5"
+        
+        let url = URL(string: urlString)
+        URLSession.shared.dataTask(with: url!) { (data, resp, err) in
+            print("Finished downloading")
+            guard let data = data else {return}
+            print(data)
+            
+            let jsonDecoder = JSONDecoder()
+            do {
+                let jsonContacts = try jsonDecoder.decode(ContactUser.self, from: data)
+        
+                self.contactUser = jsonContacts
+                
+                print("contactuser \(jsonContacts)")
+            } catch let jsonErr {
+                print("Error serializing json", jsonErr)
+            }
+        }.resume() // please do not forget to make this call
+        
+        print("contactuser \(self.contactUser)")
+        
         tableView.backgroundColor = .white
         
         
@@ -139,8 +162,6 @@ class ContactsController: UITableViewController, CreateContactControllerDelegate
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        
-//        return (expandableName?.data.count)!
         return fetchResultsController.sections![section].numberOfObjects
     }
     
@@ -154,15 +175,37 @@ class ContactsController: UITableViewController, CreateContactControllerDelegate
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+//        self.getDetailContact(id: fetchResultsController.object(at: indexPath).id)
+        
+        
         let destination = ContactsDetail()
         destination.contact = fetchResultsController.object(at: indexPath)
-        
-//        guard let id = jsonContact.data![indexPath.row].id else { return }
-//        let testJSON = getDetailContactFromServer(id: id)
-//        destination.viewHeader.nameLabel.text = "\(String(describing: testJSON.data![indexPath.row].firstname)) \(String(describing: testJSON.data![indexPath.row].lastname))"
-//        destination.mobileText.text = "mobile    \(testJSON.data![indexPath.row].phonenumber ?? "")"
-//        destination.emailText.text = "email    \(testJSON.data![indexPath.row].email ?? "")"
-        self.navigationController?.pushViewController(destination, animated: true)
+        destination.contactUser = self.contactUser
+        print(self.contactUser?.data)
+        navigationController?.pushViewController(destination, animated: true)
+    }
+
+    func getDetailContact(id: Int16) {
+
+        let urlString = "https://sportacuz.id/sandbox/contact/\(id)"
+
+        let url = URL(string: urlString)
+        URLSession.shared.dataTask(with: url!) { (data, resp, err) in
+            print("Finished downloading")
+            guard let data = data else {return}
+            print(data)
+
+            let jsonDecoder = JSONDecoder()
+            do {
+                let jsonContacts = try jsonDecoder.decode(ContactUser.self, from: data)
+
+                print(jsonContacts.data.id ?? 0)
+                self.contactUser = jsonContacts
+
+            } catch let jsonErr {
+                print("Error serializing json", jsonErr)
+            }
+        }.resume() // please do not forget to make this call
         
         
     }
@@ -170,7 +213,6 @@ class ContactsController: UITableViewController, CreateContactControllerDelegate
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 65
     }
-    
     
     // specify your extension methods here....
     func didEditContact(contact: Contact) {
@@ -191,58 +233,5 @@ class ContactsController: UITableViewController, CreateContactControllerDelegate
         }
     }
 
-    func getDetailContactFromServer(id: Int) -> JSONContact {
-        
-        let urlString = "https://sportacuz.id/sandbox/contact/\(id)"
-        
-//        var jsonContact = JSONContact()
-        
-        let url = URL(string: urlString)
-        URLSession.shared.dataTask(with: url!) { (data, resp, err) in
-            print("Finished downloading")
-            guard let data = data else {return}
-            print(data)
-            do {
-                let suspectJSON =  try JSONDecoder().decode(JSONContact.self, from: data)
-                for suspect in suspectJSON.data! {
-                    //                    self.suspects.data.append(suspect)
-                    //                    print(self.suspects.count)
-                    self.jsonContact.data?.append(suspect)
-                }
-                
-                self.jsonContact = suspectJSON
-                DispatchQueue.main.async {
-                    self.tableView.reloadData()
-                }
-                
-            } catch let jsonErr {
-                print("Error serializing json", jsonErr)
-            }
-        }.resume() // please do not forget to make this call
-        
-        return self.jsonContact
-    }
-}
-
-
-
-struct ContactJsonStuff: Decodable {
-    var data: [ContactDataArray]
-}
-
-
-struct ContactDataArray: Codable {
-    let id: Int?
-    let firstname: String?
-    let lastname: String?
-//    var isfavorite: Bool = false
-    let imageurl: String?
     
-    private enum CodingKeys: String, CodingKey {
-        case id = "id"
-        case firstname = "firstname"
-        case lastname = "lastname"
-//        case isfavorite = "isfavorite"
-        case imageurl = "imageurl"
-    }
 }
